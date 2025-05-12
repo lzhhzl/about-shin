@@ -1,2 +1,2 @@
 # about-shin
-some tools for shin engine
+some tools and projects for shin engine.
