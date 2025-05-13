@@ -8,7 +8,7 @@ from PIL import Image
 import io
 import numpy as np
 
-import lz77_new as lz77
+import lz77
 import crc32
 
 # debug result when 19968<=unicode<=40959
@@ -200,11 +200,10 @@ class LazyGlyph:
             if (info.bearing_x, info.bearing_y) not in LOG_OFS:
                 LOG_OFS.append((info.bearing_x, info.bearing_y))
         # debug end
-        # 获取未压缩/解压后的数据
+        # 获取未压缩/解压后的数据 get uncompressed/decompressed data
         reader = io.BytesIO(data)
         reader.seek(offset+glyph_header.size)
         if compressed_size == 0:
-            # 应修正?：uncompressed_size = uncompressed_size + (uncompressed_size//4) + (uncompressed_size//16) + (uncompressed_size//64)
             data = reader.read(uncompressed_size)
             is_compressed = False
         else:
@@ -261,7 +260,7 @@ class Font:
             start = i*4 + header.size
             character_table[i] = int.from_bytes(data[start: start+4], "little", signed=False)
         
-        # 计算字符表CRC32校验和
+        # 计算字符表CRC32校验和  calculate character table CRC32
         character_table_bytes = struct.pack(f'<{len(character_table)}I', *character_table)
         character_table_crc = crc32.crc32(character_table_bytes, 0)
         
@@ -280,16 +279,6 @@ class Font:
     def get_line_height(self) -> int:
         return self.ascent + self.descent
 
-    # Get the distance between the baseline and the top of the font
-    # def get_descent(self) -> int:
-    #     return self.descent
-
-    # def get_ascent(self) -> int:
-    #     return self.ascent
-
-    # def get_character_table_crc(self) -> int:
-    #     return self.character_table_crc
-
     def get_glyph_for_character(self, character: int) -> Glyph:
         return self.glyphs[self.characters[character]]
 
@@ -301,9 +290,6 @@ class Font:
 
     def get_character_mapping(self) -> List[int]:
         return self.characters
-
-    # def get_glyphs(self) -> Dict[int, Glyph]:
-    #     return self.glyphs
 
 
 # def read_font(reader: io.BytesIO) -> Font:
@@ -318,8 +304,8 @@ def read_lazy_font(read_data: bytes) -> Font:
 
 def main():
     os.chdir(os.path.dirname(__file__))
-    font_path = r"D:\Gamesource\konosuba\shin-sdu\default.fnt"
-    output_path = r"D:\Gamesource\konosuba\shin-sdu\pyoutput"
+    font_path = r""  # set fnt(FNT4) file path here
+    output_path = r""  # set glyph output path here
     os.makedirs(output_path, exist_ok=True)
 
     with open(font_path, 'rb') as fp:
