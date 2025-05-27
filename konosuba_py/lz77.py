@@ -9,10 +9,15 @@ but the amount of bits spent on each part is dependent on the format (const gene
 Offset is specified as amount to seek back from the current position.
 The minimum offset is 1, so the actual offset is offset + 1.
 The minimum length is 3, so the actual length is length + 3.
+
+see also,
+https://github.com/DCNick3/shin/blob/master/shin-core/src/format/lz77.rs
+https://github.com/DCNick3/shin-translation-tools/blob/master/shin-font/src/lib.rs
+https://gitlab.com/Neurochitin/kaleido/-/tree/saku/fnt
 '''
 
 
-def decompress(input_data: bytes, offset_bits: int) -> bytes:
+def decompress(input_data: bytes, seek_bits: int, backseek_nbyte: int) -> bytes:
     input_stream = io.BytesIO(input_data)
     output = io.BytesIO()
 
@@ -26,15 +31,30 @@ def decompress(input_data: bytes, offset_bits: int) -> bytes:
                 output.write(input_stream.read(1))
             else:
                 # back seek
-                backseek_spec = int.from_bytes(input_stream.read(2), 'big', signed=False)  # big endian Oo
+                backseek_spec = int.from_bytes(input_stream.read(backseek_nbyte), 'big', signed=False)  # big endian Oo
                 '''
+                FNT4 v0
+                MSB  XXXXXXXX          YYYYYYYY    LSB
+                val  backOffset        len
+                size (8-LEN_BITS)      LEN_BITS
+                
+                FNT4 v1
                 MSB  XXXXXXXX          YYYYYYYY    LSB
                 val  len               backOffset
                 size (16-OFFSET_BITS)  OFFSET_BITS
                 '''
-                back_offset_mask = (1 << offset_bits) - 1  # magic to get the last OFFSET_BITS bits
-                back_length = (backseek_spec >> offset_bits) + 3
-                back_offset = (backseek_spec & back_offset_mask) + 1
+                if backseek_nbyte==2:  # FNT4 v1 use
+                    offset_bits = seek_bits
+                    back_offset_mask = (1 << offset_bits) - 1  # magic to get the last OFFSET_BITS bits
+                    back_length = (backseek_spec >> offset_bits) + 3
+                    back_offset = (backseek_spec & back_offset_mask) + 1
+                elif backseek_nbyte==1:  # FNT4 v0 use
+                    len_bits = seek_bits
+                    back_len_mask = (1 << len_bits) - 1  # magic to get the last LEN_BITS bits
+                    back_length = (backseek_spec & back_len_mask) + 2
+                    back_offset = (backseek_spec >> len_bits) + 1
+                else:
+                    raise Exception(f"unknown backseek nbyte:{backseek_nbyte}")
 
                 for _ in range(back_length):  # push char to output one by one
                     last = output.tell() - back_offset
@@ -46,6 +66,7 @@ def decompress(input_data: bytes, offset_bits: int) -> bytes:
 
 
 def compress(input_bytes: bytes, offset_bits:int=10) -> bytes:
+    # just implement FNT4-v1 format yet, FNT4-v0 future maybe
     count_bits = (16-offset_bits)
     max_count = (1 << count_bits) - 1 + 3  # max_count as look_ahead_buf_len
     max_offset = (1 << offset_bits) - 1 + 1  # max_offset as search_buf_len

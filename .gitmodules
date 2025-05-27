@@ -7,6 +7,3 @@
 [submodule "shin-translation-tools"]
 	path = shin-translation-tools
 	url = https://github.com/DCNick3/shin-translation-tools.git
-[submodule "kaleido"]
-	path = kaleido
-	url = git@gitlab.com:Neurochitin/kaleido.git
