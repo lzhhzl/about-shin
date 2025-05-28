@@ -24,7 +24,7 @@ The main Font(magic `FNT4`) file use in shin-engine, name e.g.`default.fnt` `fon
 - FNT4 v1
 - FNT4 v0 (older format)
 
-I also made my own [tool](.\konosuba_py) about fnt for Konosuba(PCSG01258 psvita) localization mod. You can made your own tool for reference. Also welcome to raise issue if you have any questions.
+I also made my own [tool](./konosuba_py) about fnt for Konosuba(PCSG01258 psvita) localization mod. You can made your own tool for reference. Also welcome to raise issue if you have any questions.
 
 *There are some other games with different engine released by Entergram that also use the FNT4 struct font file:*
 
